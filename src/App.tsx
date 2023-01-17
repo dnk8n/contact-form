@@ -1,34 +1,43 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import './App.css'
+import React, { useState } from 'react';
+import { useMutation } from '@apollo/react-hooks';
+import client from './apolloConfig'
+import { SEND_FORM } from './queries'
 
-function App() {
-  const [count, setCount] = useState(0)
 
+const App: React.FC = () => {
+  const [formData, setFormData] = useState({ msg: '', addr: '' });
+  const [sendform, { data }] = useMutation(SEND_FORM, {client});
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    try {
+      const response = await sendform({ variables: { form: formData } });
+      if (response.data.sendform.success) {
+        alert('Form submitted successfully!');
+      } else {
+        alert('There was an error submitting the form: ' + response.data.sendform.errors);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('There was an error submitting the form');
+    }
+  };
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setFormData({ ...formData, [name]: value });
+  };
   return (
-    <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </div>
-  )
-}
+    <form onSubmit={handleSubmit}>
+      <label>
+        Message:
+        <input type="text" name="msg" value={formData.msg} onChange={handleChange} />
+      </label>
+      <label>
+        Email Address:
+        <input type="email" name="addr" value={formData.addr} onChange={handleChange} />
+      </label>
+      <button type="submit">Send</button>
+    </form>
+  );
+};
 
-export default App
+export default App;
